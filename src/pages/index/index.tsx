@@ -1,82 +1,122 @@
 // src/pages/index/index.tsx
-import { FC, useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Button } from "@tarojs/components";
-import { useGameStore } from "../../store/gameStore";
-import DiceContainer from "@/components/dice/DiceContainer";
-import ScoreCard from "@/components/ScoreCard";
-import GameHeader from "@/components/Header";
-import ActionButton from "@/components/AuctionButton";
-import { ScoreCategory } from "@/types/types";
-import { calculateScore } from "@/utils/scoring";
-import Taro from "@tarojs/taro";
+import { FC, useCallback, useMemo } from 'react'
+import { View, Text } from '@tarojs/components'
+import { useGameStore } from '@/store/gameStore'
+import DiceContainer from '@/components/dice/DiceContainer'
+import ScoreCard from '@/components/score/ScoreCard'
+import GameHeader from '@/components/Header'
+import ActionButton from '@/components/AuctionButton'
+import { ScoreCategory } from '@/types/types'
+import { calculateScore } from '@/utils/scoring'
+import Taro from '@tarojs/taro'
+
+// 基础得分项和组合得分项分类
+const BASIC_CATEGORIES: ScoreCategory[] = [
+  'Ones', 'Twos', 'Threes', 'Fours', 'Fives', 'Sixes'
+];
+
+const COMBINATION_CATEGORIES: ScoreCategory[] = [
+  'FullHouse', 'FourOfAKind', 'LittleStraight', 'BigStraight', 'Choice', 'Yacht'
+];
+
+// 基础得分奖励阈值和数额
+const BONUS_THRESHOLD = 63;
+const BONUS_AMOUNT = 35;
 
 const GamePage: FC = () => {
-  const { gameState, rollDices, toggleLock, recordScore, resetGame } =
-    useGameStore();
-
+  const {
+    gameState,
+    rollDices,
+    toggleLock,
+    recordScore,
+    resetGame
+  } = useGameStore()
 
   // 处理骰子锁定状态切换
-  const handleLockDice = useCallback(
-    (index: number) => {
-      if (gameState.rollsRemaining < 3) {
-        // 至少摇过一次才能锁定
-        toggleLock(index);
-        Taro.vibrateShort(); // 微信小程序振动反馈
+  const handleLockDice = useCallback((index: number) => {
+    if (gameState.rollsRemaining < 3) {
+      toggleLock(index)
+      Taro.vibrateShort()
+    }
+  }, [gameState.rollsRemaining, toggleLock])
+
+  // 计算所有分类的预览分数
+  const previewScores = useMemo(() => {
+    if (gameState.rollsRemaining === 3) return {}
+
+    const currentDiceValues = gameState.dices.map(d => d.value)
+    const result: Partial<Record<ScoreCategory, number>> = {}
+
+    Object.entries(gameState.scores).forEach(([category, score]) => {
+      if (score === null) {
+        const categoryKey = category as ScoreCategory
+        result[categoryKey] = calculateScore(categoryKey, currentDiceValues)
       }
-    },
-    [gameState.rollsRemaining, toggleLock]
-  );
+    })
+
+    return result
+  }, [gameState.dices, gameState.rollsRemaining, gameState.scores])
 
   // 处理计分选择
-  const handleScoreSelection = useCallback(
-    (category: ScoreCategory) => {
-      if (gameState.scores[category] !== null) return;
+  const handleScoreSelection = useCallback((category: ScoreCategory) => {
+    if (gameState.scores[category] !== null) return
 
-      const currentDiceValues = gameState.dices.map((d) => d.value);
-      const score = calculateScore(category, currentDiceValues);
+    const currentDiceValues = gameState.dices.map(d => d.value)
+    const score = calculateScore(category, currentDiceValues)
+    
+    recordScore(category, score)
+  }, [gameState.dices, gameState.scores, recordScore])
 
-      recordScore(category, score);
+  // 计算基础得分总和
+  const basicScoresTotal = useMemo(() => {
+    return BASIC_CATEGORIES.reduce((total, category) => {
+      return total + (gameState.scores[category] || 0)
+    }, 0)
+  }, [gameState.scores])
 
-      // 播放音效（需要配置音频文件）
-      // const audio = Taro.createInnerAudioContext()
-      // audio.src = '/assets/sound/success.mp3'
-      // audio.play()
-    },
-    [gameState.dices, gameState.scores, recordScore]
-  );
+  // 判断是否获得基础分奖励
+  const bonusEarned = basicScoresTotal >= BONUS_THRESHOLD;
+
+  // 计算总分（包括基础分、奖励和组合分）
+  const totalScore = useMemo(() => {
+    const allScoresSum = Object.values(gameState.scores).reduce(
+      (total, score) => total===null?0:total + (score || 0), 0
+    );
+    return allScoresSum===null?0:allScoresSum + (bonusEarned ? BONUS_AMOUNT : 0)
+  }, [gameState.scores, bonusEarned])
 
   // 游戏结束检测
   const isGameEnded = Object.values(gameState.scores).every(
-    (score) => score !== null
-  );
+    score => score !== null
+  )
 
   // 重置游戏提示
   const showResetDialog = useCallback(() => {
     Taro.showModal({
-      title: "重新开始游戏",
-      content: "确定要重置当前游戏进度吗？",
+      title: '重新开始游戏',
+      content: '确定要重置当前游戏进度吗？',
       success: (res) => {
-        if (res.confirm) resetGame();
-      },
-    });
-  }, [resetGame]);
+        if (res.confirm) resetGame()
+      }
+    })
+  }, [resetGame])
 
-  useEffect(() => {
-    console.log(gameState);
-  }, []);
   return (
     <View className="min-h-screen bg-gray-50">
       <GameHeader />
 
       {/* 骰子容器区域 */}
       <View className="bg-white py-4 shadow-sm">
-        <DiceContainer
+        <DiceContainer 
           dices={gameState.dices}
           onLockToggle={handleLockDice}
         />
+        
         <View className="px-4 flex justify-between items-center">
-          <Text className="text-gray-500 text-sm">点击骰子锁定/解锁</Text>
-          <Text className="text-blue-500">
+          <Text className="text-gray-500 text-sm">
+            点击骰子锁定/解锁
+          </Text>
+          <Text className={`${gameState.rollsRemaining === 0 ? 'text-red-500' : 'text-blue-500'}`}>
             {gameState.rollsRemaining}/3 次剩余
           </Text>
         </View>
@@ -88,13 +128,15 @@ const GamePage: FC = () => {
           variant="primary"
           onClick={rollDices}
           disabled={gameState.rollsRemaining === 0}
-          className='flex-1'
+          className="flex-1"
         >
-          {gameState.rollsRemaining > 0
-            ? `摇骰子 (${gameState.rollsRemaining}次)`
-            : "点击重新开始"}
+          {gameState.rollsRemaining > 0 ? (
+            `摇骰子 (${gameState.rollsRemaining}次)`
+          ) : (
+            '无法再摇骰子'
+          )}
         </ActionButton>
-
+        
         <ActionButton
           variant="secondary"
           onClick={showResetDialog}
@@ -104,35 +146,85 @@ const GamePage: FC = () => {
         </ActionButton>
       </View>
 
-      {/* 计分板区域 */}
+      {/* 计分板区域 - 使用卡片包装 */}
       <View className="p-4">
-        <Text className="text-lg font-bold mb-4">计分板</Text>
-
-        <View className="grid gap-2">
-          {Object.entries(gameState.scores).map(([category, score]) => (
-            <ScoreCard
-              key={category}
-              category={category as ScoreCategory}
-              score={score}
-              isActive={score === null && gameState.rollsRemaining < 3}
-              onClick={() => handleScoreSelection(category as ScoreCategory)}
-            />
-          ))}
+        <View className="bg-white p-4 rounded-lg shadow mb-4">
+          <Text className="text-lg font-bold mb-3">基础得分项</Text>
+          
+          {/* 基础得分项 */}
+          <View className="grid gap-2">
+            {BASIC_CATEGORIES.map(category => (
+              <ScoreCard
+                key={category}
+                category={category}
+                score={gameState.scores[category]}
+                previewScore={previewScores[category]}
+                isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                onClick={() => handleScoreSelection(category)}
+              />
+            ))}
+          </View>
+          
+          {/* 基础得分总和与奖励 */}
+          <View className="mt-4 border-t pt-3">
+            <View className="flex justify-between items-center mb-2">
+              <Text className="font-medium">基础得分总和:</Text>
+              <Text className="text-lg">{basicScoresTotal}/63</Text>
+            </View>
+            
+            <View className="flex justify-between items-center">
+              <View className="flex items-center">
+                <Text className="font-medium">奖励分数:</Text>
+                <Text className="text-sm text-gray-500 ml-2">
+                  (基础分≥63得{BONUS_AMOUNT}分)
+                </Text>
+              </View>
+              <Text className={`text-lg font-bold ${bonusEarned ? 'text-green-500' : 'text-gray-400'}`}>
+                {bonusEarned ? `+${BONUS_AMOUNT}` : '0'}
+              </Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* 组合得分项 */}
+        <View className="bg-white p-4 rounded-lg shadow mb-4">
+          <Text className="text-lg font-bold mb-3">组合得分项</Text>
+          <View className="grid gap-2">
+            {COMBINATION_CATEGORIES.map(category => (
+              <ScoreCard
+                key={category}
+                category={category}
+                score={gameState.scores[category]}
+                previewScore={previewScores[category]}
+                isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                onClick={() => handleScoreSelection(category)}
+              />
+            ))}
+          </View>
+        </View>
+        
+        {/* 总分显示 */}
+        <View className="bg-white p-4 rounded-lg shadow">
+          <View className="flex justify-between items-center">
+            <Text className="text-xl font-bold">总分</Text>
+            <Text className="text-2xl text-blue-600 font-bold">{totalScore}</Text>
+          </View>
         </View>
       </View>
 
       {/* 游戏结束提示 */}
       {isGameEnded && (
-        <View className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <View className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <View className="bg-white p-6 rounded-lg max-w-80">
             <Text className="text-xl font-bold mb-4 block">游戏结束！</Text>
-            <Text className="text-2xl text-blue-600 block text-center mb-4">
-              总分:{" "}
-              {Object.values(gameState.scores).reduce(
-                (a, b) => (a === null ? 0 : a + (b || 0)),
-                0
-              )}
+            <Text className="text-2xl text-blue-600 block text-center mb-2">
+              总分: {totalScore}
             </Text>
+            {bonusEarned && (
+              <Text className="text-green-500 text-center mb-4">
+                (包含基础分奖励 +{BONUS_AMOUNT}分)
+              </Text>
+            )}
             <ActionButton
               variant="primary"
               onClick={resetGame}
@@ -144,7 +236,7 @@ const GamePage: FC = () => {
         </View>
       )}
     </View>
-  );
-};
+  )
+}
 
-export default GamePage;
+export default GamePage

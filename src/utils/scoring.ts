@@ -64,7 +64,7 @@ const sumDices = (dices: DiceFace[], target?: DiceFace): number => {
 
 /* ========== 组合判断逻辑 ========== */
 
-/** 检查满堂红（三带一对） */
+/** 检查葫芦（三带一对） */
 const checkFullHouse = (counts: number[]): boolean => {
   const hasThree = counts.some(c => c === 3)
   const hasTwo = counts.some(c => c === 2)
