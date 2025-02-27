@@ -1,0 +1,13 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "yahtzee",
+  "description": "快艇骰子",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}
