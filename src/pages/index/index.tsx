@@ -146,72 +146,73 @@ const GamePage: FC = () => {
         </ActionButton>
       </View>
 
-      {/* 计分板区域 - 使用卡片包装 */}
+      {/* 计分板区域 */}
       <View className="p-4">
-        <View className="bg-white p-4 rounded-lg shadow mb-4">
-          <Text className="text-lg font-bold mb-3">基础得分项</Text>
-          
-          {/* 基础得分项 */}
-          <View className="grid gap-2">
-            {BASIC_CATEGORIES.map(category => (
-              <ScoreCard
-                key={category}
-                category={category}
-                score={gameState.scores[category]}
-                previewScore={previewScores[category]}
-                isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
-                onClick={() => handleScoreSelection(category)}
-              />
-            ))}
-          </View>
-          
-          {/* 基础得分总和与奖励 */}
-          <View className="mt-4 border-t pt-3">
-            <View className="flex justify-between items-center mb-2">
-              <Text className="font-medium">基础得分总和:</Text>
-              <Text className="text-lg">{basicScoresTotal}/63</Text>
-            </View>
-            
-            <View className="flex justify-between items-center">
-              <View className="flex items-center">
-                <Text className="font-medium">奖励分数:</Text>
-                <Text className="text-sm text-gray-500 ml-2">
-                  (基础分≥63得{BONUS_AMOUNT}分)
-                </Text>
+        <View className="score-board flex flex-row" style={{ display: 'flex', flexDirection: 'row' }}>
+          <View className="score-column" style={{ flex: 1, marginRight: '8px' }}>
+            <View className="bg-white p-3 rounded-lg shadow">
+              <Text className="text-base font-bold mb-2">基础得分项</Text>
+              
+              <View>
+                {BASIC_CATEGORIES.map(category => (
+                  <ScoreCard
+                    key={category}
+                    category={category}
+                    score={gameState.scores[category]}
+                    previewScore={previewScores[category]}
+                    isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                    onClick={() => handleScoreSelection(category)}
+                    compact={true}
+                  />
+                ))}
               </View>
-              <Text className={`text-lg font-bold ${bonusEarned ? 'text-green-500' : 'text-gray-400'}`}>
-                {bonusEarned ? `+${BONUS_AMOUNT}` : '0'}
-              </Text>
+              
+              {/* 基础得分总和与奖励 */}
+              <View className="mt-2 border-t pt-2">
+                <View className="flex justify-between items-center">
+                  <Text className="text-sm">基础得分:</Text>
+                  <Text className="text-base">{basicScoresTotal}/63</Text>
+                </View>
+                
+                <View className="flex justify-between items-center">
+                  <Text className="text-sm">奖励:</Text>
+                  <Text className={`text-base ${bonusEarned ? 'text-green-500' : 'text-gray-400'}`}>
+                    {bonusEarned ? `+${BONUS_AMOUNT}` : '0'}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-        
-        {/* 组合得分项 */}
-        <View className="bg-white p-4 rounded-lg shadow mb-4">
-          <Text className="text-lg font-bold mb-3">组合得分项</Text>
-          <View className="grid gap-2">
-            {COMBINATION_CATEGORIES.map(category => (
-              <ScoreCard
-                key={category}
-                category={category}
-                score={gameState.scores[category]}
-                previewScore={previewScores[category]}
-                isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
-                onClick={() => handleScoreSelection(category)}
-              />
-            ))}
+          
+          {/* 组合得分项 */}
+          <View className="score-column" style={{ flex: 1, marginLeft: '8px' }}>
+            <View className="bg-white p-3 rounded-lg shadow">
+              <Text className="text-base font-bold mb-2">组合得分项</Text>
+              <View>
+                {COMBINATION_CATEGORIES.map(category => (
+                  <ScoreCard
+                    key={category}
+                    category={category}
+                    score={gameState.scores[category]}
+                    previewScore={previewScores[category]}
+                    isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                    onClick={() => handleScoreSelection(category)}
+                    compact={true}
+                  />
+                ))}
+              </View>
+            </View>
           </View>
         </View>
         
         {/* 总分显示 */}
-        <View className="bg-white p-4 rounded-lg shadow">
+        <View className="bg-white p-4 rounded-lg shadow mt-4">
           <View className="flex justify-between items-center">
             <Text className="text-xl font-bold">总分</Text>
             <Text className="text-2xl text-blue-600 font-bold">{totalScore}</Text>
           </View>
         </View>
       </View>
-
       {/* 游戏结束提示 */}
       {isGameEnded && (
         <View className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
