@@ -1,35 +1,33 @@
-// src/components/DiceContainer.tsx
-import { FC, memo } from 'react'
-import { View, Text } from '@tarojs/components'
+import { FC, memo, useState, useEffect } from 'react'
+import { View } from '@tarojs/components'
 import { DiceState } from '@/types/types'
+import Dice3D from './Dices'
 
 interface Props {
-  dices: DiceState[],
+  dices: DiceState[]
   onLockToggle: (index: number) => void
+  isRolling?: boolean
 }
 
-const DiceContainer: FC<Props> = ({ dices, onLockToggle }) => {
+const DiceContainer: FC<Props> = ({ 
+  dices, 
+  onLockToggle, 
+  isRolling = false 
+}) => {
   return (
-    <View className="flex justify-between my-6 px-4">
+    <View className="dice-container flex justify-around py-6 px-2">
       {dices.map((dice, index) => (
-        <View
+        <Dice3D
           key={index}
-          className={`w-16 h-16 rounded-lg flex items-center justify-center
-            shadow-lg transition-all duration-300
-            ${dice.isLocked 
-              ? 'bg-blue-500 scale-110' 
-              : 'bg-white hover:bg-gray-50'}
-            ${dice.isLocked ? 'ring-4 ring-blue-300' : ''}`}
+          value={dice.value}
+          isLocked={dice.isLocked}
+          isRolling={isRolling && !dice.isLocked}
           onClick={() => onLockToggle(index)}
-        >
-          <Text className={`text-3xl font-bold 
-            ${dice.isLocked ? 'text-white' : 'text-gray-800'}`}>
-            {dice.value}
-          </Text>
-        </View>
+        />
       ))}
     </View>
   )
 }
 
 export default memo(DiceContainer)
+

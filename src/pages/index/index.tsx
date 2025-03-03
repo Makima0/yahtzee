@@ -1,22 +1,32 @@
 // src/pages/index/index.tsx
-import { FC, useCallback, useMemo } from 'react'
-import { View, Text } from '@tarojs/components'
-import { useGameStore } from '@/store/gameStore'
-import DiceContainer from '@/components/dice/DiceContainer'
-import ScoreCard from '@/components/score/ScoreCard'
-import GameHeader from '@/components/Header'
-import ActionButton from '@/components/AuctionButton'
-import { ScoreCategory } from '@/types/types'
-import { calculateScore } from '@/utils/scoring'
-import Taro from '@tarojs/taro'
+import { FC, useCallback, useMemo, useState } from "react";
+import { View, Text } from "@tarojs/components";
+import { useGameStore } from "@/store/gameStore";
+import DiceContainer from "@/components/dice/DiceContainer";
+import ScoreCard from "@/components/score/ScoreCard";
+import GameHeader from "@/components/Header";
+import ActionButton from "@/components/AuctionButton";
+import { ScoreCategory } from "@/types/types";
+import { calculateScore } from "@/utils/scoring";
+import Taro from "@tarojs/taro";
 
 // 基础得分项和组合得分项分类
 const BASIC_CATEGORIES: ScoreCategory[] = [
-  'Ones', 'Twos', 'Threes', 'Fours', 'Fives', 'Sixes'
+  "Ones",
+  "Twos",
+  "Threes",
+  "Fours",
+  "Fives",
+  "Sixes",
 ];
 
 const COMBINATION_CATEGORIES: ScoreCategory[] = [
-  'FullHouse', 'FourOfAKind', 'LittleStraight', 'BigStraight', 'Choice', 'Yacht'
+  "FullHouse",
+  "FourOfAKind",
+  "LittleStraight",
+  "BigStraight",
+  "Choice",
+  "Yacht",
 ];
 
 // 基础得分奖励阈值和数额
@@ -24,55 +34,69 @@ const BONUS_THRESHOLD = 63;
 const BONUS_AMOUNT = 35;
 
 const GamePage: FC = () => {
-  const {
-    gameState,
-    rollDices,
-    toggleLock,
-    recordScore,
-    resetGame
-  } = useGameStore()
-
-  // 处理骰子锁定状态切换
-  const handleLockDice = useCallback((index: number) => {
-    if (gameState.rollsRemaining < 3) {
-      toggleLock(index)
-      Taro.vibrateShort()
+  const { gameState, rollDices, toggleLock, recordScore, resetGame } =
+    useGameStore();
+  // 添加骰子动画状态
+  const [isRolling, setIsRolling] = useState(false)
+  
+  const handleRollDice = useCallback(() => {
+    if (gameState.rollsRemaining > 0) {
+      setIsRolling(true)
+      
+      // 先播放动画，然后更新骰子值
+      setTimeout(() => {
+        rollDices()
+        setIsRolling(false)
+      }, 800)
     }
-  }, [gameState.rollsRemaining, toggleLock])
+  }, [gameState.rollsRemaining, rollDices])
+  // 处理骰子锁定状态切换
+  const handleLockDice = useCallback(
+    (index: number) => {
+      if (gameState.rollsRemaining < 3) {
+        toggleLock(index);
+        Taro.vibrateShort();
+      }
+    },
+    [gameState.rollsRemaining, toggleLock]
+  );
 
   // 计算所有分类的预览分数
   const previewScores = useMemo(() => {
-    if (gameState.rollsRemaining === 3) return {}
+    if (gameState.rollsRemaining === 3) return {};
 
-    const currentDiceValues = gameState.dices.map(d => d.value)
-    const result: Partial<Record<ScoreCategory, number>> = {}
+    const currentDiceValues = gameState.dices.map((d) => d.value);
+    const result: Partial<Record<ScoreCategory, number>> = {};
 
     Object.entries(gameState.scores).forEach(([category, score]) => {
       if (score === null) {
-        const categoryKey = category as ScoreCategory
-        result[categoryKey] = calculateScore(categoryKey, currentDiceValues)
+        const categoryKey = category as ScoreCategory;
+        result[categoryKey] = calculateScore(categoryKey, currentDiceValues);
       }
-    })
+    });
 
-    return result
-  }, [gameState.dices, gameState.rollsRemaining, gameState.scores])
+    return result;
+  }, [gameState.dices, gameState.rollsRemaining, gameState.scores]);
 
   // 处理计分选择
-  const handleScoreSelection = useCallback((category: ScoreCategory) => {
-    if (gameState.scores[category] !== null) return
+  const handleScoreSelection = useCallback(
+    (category: ScoreCategory) => {
+      if (gameState.scores[category] !== null) return;
 
-    const currentDiceValues = gameState.dices.map(d => d.value)
-    const score = calculateScore(category, currentDiceValues)
-    
-    recordScore(category, score)
-  }, [gameState.dices, gameState.scores, recordScore])
+      const currentDiceValues = gameState.dices.map((d) => d.value);
+      const score = calculateScore(category, currentDiceValues);
+
+      recordScore(category, score);
+    },
+    [gameState.dices, gameState.scores, recordScore]
+  );
 
   // 计算基础得分总和
   const basicScoresTotal = useMemo(() => {
     return BASIC_CATEGORIES.reduce((total, category) => {
-      return total + (gameState.scores[category] || 0)
-    }, 0)
-  }, [gameState.scores])
+      return total + (gameState.scores[category] || 0);
+    }, 0);
+  }, [gameState.scores]);
 
   // 判断是否获得基础分奖励
   const bonusEarned = basicScoresTotal >= BONUS_THRESHOLD;
@@ -80,26 +104,29 @@ const GamePage: FC = () => {
   // 计算总分（包括基础分、奖励和组合分）
   const totalScore = useMemo(() => {
     const allScoresSum = Object.values(gameState.scores).reduce(
-      (total, score) => total===null?0:total + (score || 0), 0
+      (total, score) => (total === null ? 0 : total + (score || 0)),
+      0
     );
-    return allScoresSum===null?0:allScoresSum + (bonusEarned ? BONUS_AMOUNT : 0)
-  }, [gameState.scores, bonusEarned])
+    return allScoresSum === null
+      ? 0
+      : allScoresSum + (bonusEarned ? BONUS_AMOUNT : 0);
+  }, [gameState.scores, bonusEarned]);
 
   // 游戏结束检测
   const isGameEnded = Object.values(gameState.scores).every(
-    score => score !== null
-  )
+    (score) => score !== null
+  );
 
   // 重置游戏提示
   const showResetDialog = useCallback(() => {
     Taro.showModal({
-      title: '重新开始游戏',
-      content: '确定要重置当前游戏进度吗？',
+      title: "重新开始游戏",
+      content: "确定要重置当前游戏进度吗？",
       success: (res) => {
-        if (res.confirm) resetGame()
-      }
-    })
-  }, [resetGame])
+        if (res.confirm) resetGame();
+      },
+    });
+  }, [resetGame]);
 
   return (
     <View className="min-h-screen bg-gray-50">
@@ -107,16 +134,19 @@ const GamePage: FC = () => {
 
       {/* 骰子容器区域 */}
       <View className="bg-white py-4 shadow-sm">
-        <DiceContainer 
+        <DiceContainer
           dices={gameState.dices}
           onLockToggle={handleLockDice}
+          isRolling={isRolling}
         />
-        
+
         <View className="px-4 flex justify-between items-center">
-          <Text className="text-gray-500 text-sm">
-            点击骰子锁定/解锁
-          </Text>
-          <Text className={`${gameState.rollsRemaining === 0 ? 'text-red-500' : 'text-blue-500'}`}>
+          <Text className="text-gray-500 text-sm">点击骰子锁定/解锁</Text>
+          <Text
+            className={`${
+              gameState.rollsRemaining === 0 ? "text-red-500" : "text-blue-500"
+            }`}
+          >
             {gameState.rollsRemaining}/3 次剩余
           </Text>
         </View>
@@ -126,17 +156,17 @@ const GamePage: FC = () => {
       <View className="p-4 flex gap-3">
         <ActionButton
           variant="primary"
-          onClick={rollDices}
-          disabled={gameState.rollsRemaining === 0}
+          onClick={handleRollDice} // 使用新的处理函数
+          disabled={gameState.rollsRemaining === 0 || isRolling}
           className="flex-1"
         >
-          {gameState.rollsRemaining > 0 ? (
-            `摇骰子 (${gameState.rollsRemaining}次)`
-          ) : (
-            '无法再摇骰子'
-          )}
+          {isRolling
+            ? "骰子滚动中..."
+            : gameState.rollsRemaining > 0
+            ? `摇骰子 (${gameState.rollsRemaining}次)`
+            : "无法再摇骰子"}
         </ActionButton>
-        
+
         <ActionButton
           variant="secondary"
           onClick={showResetDialog}
@@ -148,54 +178,70 @@ const GamePage: FC = () => {
 
       {/* 计分板区域 */}
       <View className="p-4">
-        <View className="score-board flex flex-row" style={{ display: 'flex', flexDirection: 'row' }}>
-          <View className="score-column" style={{ flex: 1, marginRight: '8px' }}>
-            <View className="bg-white p-3 rounded-lg shadow">
+        <View
+          className="score-board flex flex-row"
+          style={{ display: "flex", flexDirection: "row" }}
+        >
+          <View
+            className="score-column"
+            style={{ flex: 1, marginRight: "8px" }}
+          >
+            <View className="bg-white p-2 rounded-lg shadow">
               <Text className="text-base font-bold mb-2">基础得分项</Text>
-              
+
               <View>
-                {BASIC_CATEGORIES.map(category => (
+                {BASIC_CATEGORIES.map((category) => (
                   <ScoreCard
                     key={category}
                     category={category}
                     score={gameState.scores[category]}
                     previewScore={previewScores[category]}
-                    isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                    isActive={
+                      gameState.scores[category] === null &&
+                      gameState.rollsRemaining < 3
+                    }
                     onClick={() => handleScoreSelection(category)}
                     compact={true}
                   />
                 ))}
               </View>
-              
+
               {/* 基础得分总和与奖励 */}
               <View className="mt-2 border-t pt-2">
                 <View className="flex justify-between items-center">
                   <Text className="text-sm">基础得分:</Text>
                   <Text className="text-base">{basicScoresTotal}/63</Text>
                 </View>
-                
+
                 <View className="flex justify-between items-center">
                   <Text className="text-sm">奖励:</Text>
-                  <Text className={`text-base ${bonusEarned ? 'text-green-500' : 'text-gray-400'}`}>
-                    {bonusEarned ? `+${BONUS_AMOUNT}` : '0'}
+                  <Text
+                    className={`text-base ${
+                      bonusEarned ? "text-green-500" : "text-gray-400"
+                    }`}
+                  >
+                    {bonusEarned ? `+${BONUS_AMOUNT}` : "0"}
                   </Text>
                 </View>
               </View>
             </View>
           </View>
-          
+
           {/* 组合得分项 */}
-          <View className="score-column" style={{ flex: 1, marginLeft: '8px' }}>
-            <View className="bg-white p-3 rounded-lg shadow">
+          <View className="score-column" style={{ flex: 1, marginLeft: "8px" }}>
+            <View className="bg-white p-2 rounded-lg shadow">
               <Text className="text-base font-bold mb-2">组合得分项</Text>
               <View>
-                {COMBINATION_CATEGORIES.map(category => (
+                {COMBINATION_CATEGORIES.map((category) => (
                   <ScoreCard
                     key={category}
                     category={category}
                     score={gameState.scores[category]}
                     previewScore={previewScores[category]}
-                    isActive={gameState.scores[category] === null && gameState.rollsRemaining < 3}
+                    isActive={
+                      gameState.scores[category] === null &&
+                      gameState.rollsRemaining < 3
+                    }
                     onClick={() => handleScoreSelection(category)}
                     compact={true}
                   />
@@ -204,12 +250,14 @@ const GamePage: FC = () => {
             </View>
           </View>
         </View>
-        
+
         {/* 总分显示 */}
         <View className="bg-white p-4 rounded-lg shadow mt-4">
           <View className="flex justify-between items-center">
             <Text className="text-xl font-bold">总分</Text>
-            <Text className="text-2xl text-blue-600 font-bold">{totalScore}</Text>
+            <Text className="text-2xl text-blue-600 font-bold">
+              {totalScore}
+            </Text>
           </View>
         </View>
       </View>
@@ -237,7 +285,7 @@ const GamePage: FC = () => {
         </View>
       )}
     </View>
-  )
-}
+  );
+};
 
-export default GamePage
+export default GamePage;

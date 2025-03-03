@@ -1,0 +1,83 @@
+// 3D 骰子样式
+.dice-3d-container {
+    perspective: 1000px;
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+  }
+  
+  .dice-3d {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+  }
+  
+  .dice-3d-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    backface-visibility: hidden;
+  }
+  
+  // 六个面的位置
+  .dice-3d-front  { transform: rotateY(0deg) translateZ(30px); }
+  .dice-3d-back   { transform: rotateY(180deg) translateZ(30px); }
+  .dice-3d-right  { transform: rotateY(90deg) translateZ(30px); }
+  .dice-3d-left   { transform: rotateY(-90deg) translateZ(30px); }
+  .dice-3d-top    { transform: rotateX(90deg) translateZ(30px); }
+  .dice-3d-bottom { transform: rotateX(-90deg) translateZ(30px); }
+  
+  // 骰子点的样式
+  .dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #333;
+    border-radius: 50%;
+  }
+  
+  // 点的位置
+  .center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .top-left { top: 20%; left: 20%; }
+  .top-right { top: 20%; right: 20%; }
+  .middle-left { top: 50%; left: 20%; transform: translateY(-50%); }
+  .middle-right { top: 50%; right: 20%; transform: translateY(-50%); }
+  .bottom-left { bottom: 20%; left: 20%; }
+  .bottom-right { bottom: 20%; right: 20%; }
+  
+  // 旋转到不同面的变换
+  .show-1 { transform: rotateX(0deg) rotateY(0deg); }
+  .show-2 { transform: rotateX(0deg) rotateY(-90deg); }
+  .show-3 { transform: rotateX(90deg) rotateY(0deg); }
+  .show-4 { transform: rotateX(-90deg) rotateY(0deg); }
+  .show-5 { transform: rotateX(0deg) rotateY(90deg); }
+  .show-6 { transform: rotateX(180deg) rotateY(0deg); }
+  
+  // 锁定状态
+  .locked {
+    transform: translateY(-5px);
+    box-shadow: 0 0 10px rgba(0, 100, 255, 0.5);
+  }
+  
+  // 骰子滚动动画
+  @keyframes rolling {
+    0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+    25% { transform: rotateX(90deg) rotateY(45deg) rotateZ(45deg); }
+    50% { transform: rotateX(180deg) rotateY(90deg) rotateZ(90deg); }
+    75% { transform: rotateX(270deg) rotateY(135deg) rotateZ(135deg); }
+    100% { transform: rotateX(360deg) rotateY(180deg) rotateZ(180deg); }
+  }
+  
+  .rolling {
+    animation: rolling 0.6s ease-out;
+  }
+  
