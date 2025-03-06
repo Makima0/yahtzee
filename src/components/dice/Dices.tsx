@@ -1,27 +1,34 @@
-import { FC, memo } from 'react'
-import { View } from '@tarojs/components'
-import { DiceFace } from '@/types/types'
-import Taro from '@tarojs/taro'
-import './dice.scss'
+// src/components/Dice3D.tsx
+import { FC, memo } from "react";
+import { View } from "@tarojs/components";
+import { DiceFace } from "@/types/types";
+import Taro from "@tarojs/taro";
+import "./dice.scss";
 interface Props {
-  value: DiceFace
-  isLocked: boolean
-  isRolling?: boolean
-  onClick?: () => void
+  value: DiceFace;
+  isLocked: boolean;
+  isRolling?: boolean;
+  onClick?: () => void;
 }
 
 const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
   // 处理点击
   const handleClick = () => {
     if (onClick && !isRolling) {
-      onClick()
-      Taro.vibrateShort()
+      onClick();
+      Taro.vibrateShort();
     }
-  }
+  };
 
   return (
-    <View className="dice-3d-container" onClick={handleClick}>
-
+    <View
+      className={`dice-3d-container ${isLocked ? "locked" : ""} `}
+      onClick={handleClick}
+    >
+      <View
+        className={`dice-3d ${isRolling ? "rolling" : ""} 
+                            show-${value}`}
+      >
         {/* 骰子的六个面 */}
         <View className="dice-3d-face dice-3d-front">
           <View className="dot center" />
@@ -56,7 +63,7 @@ const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
           <View className="dot top-left" />
           <View className="dot bottom-right" />
         </View>
-        
+
         {/* 锁定指示器 */}
         {isLocked && (
           <View className="dice-lock-indicator">
@@ -64,7 +71,8 @@ const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
           </View>
         )}
       </View>
-  )
-}
+    </View>
+  );
+};
 
-export default memo(Dice3D)
+export default memo(Dice3D);

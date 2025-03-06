@@ -8,7 +8,7 @@ interface Props {
 
 const TotalScoreSection: FC<Props> = ({ totalScore }) => {
   return (
-    <View className="p-4">
+    <View className="p-2">
       <View className="bg-white p-4 rounded-lg shadow">
         <View className="flex justify-between items-center">
           <Text className="text-xl font-bold">总分</Text>

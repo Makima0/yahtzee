@@ -14,6 +14,9 @@ export const calculateScore = (
   // 先对骰子进行排序方便计算
   const sorted = [...dices].sort((a, b) => a - b)
   const counts = getCounts(sorted)
+console.log(counts);
+console.log(dices);
+
 
   switch (category) {
     // 基础得分项（1-6点）
