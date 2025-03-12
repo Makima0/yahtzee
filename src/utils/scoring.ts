@@ -14,9 +14,6 @@ export const calculateScore = (
   // 先对骰子进行排序方便计算
   const sorted = [...dices].sort((a, b) => a - b)
   const counts = getCounts(sorted)
-console.log(counts);
-console.log(dices);
-
 
   switch (category) {
     // 基础得分项（1-6点）
@@ -85,6 +82,8 @@ const checkFourOfAKind = (dices: DiceFace[], counts: number[]): number => {
 const checkLittleStraight = (sorted: DiceFace[]): boolean => {
   // 去重后检查连续情况
   const unique = [...new Set(sorted)]
+  console.log(unique);
+  
   return (
     isConsecutive(unique, 4) || // 标准小顺子
     (sorted[0] === 1 && sorted[4] === 5) // 特殊序列 [1,2,3,4,5]

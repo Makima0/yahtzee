@@ -9,13 +9,12 @@ module.exports = {
     }]
   ],
   plugins: [
-    [
-      'import',
-      {
-        libraryName: 'taro-hooks',
-        camel2DashComponentName: false
-      },
-      'taro-hooks',
-    ]
-  ],
+    ['import', {
+      libraryName: 'taro-hooks',
+      camel2DashComponentName: false
+    }],
+    '@babel/plugin-transform-private-methods',
+    '@babel/plugin-transform-class-properties',
+    '@babel/plugin-transform-private-property-in-object'
+  ]
 };

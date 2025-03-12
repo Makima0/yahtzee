@@ -21,8 +21,6 @@ const DiceSection: FC<Props> = ({ dices, isRolling, onLockToggle }) => {
             isLocked={dice.isLocked}
             isRolling={isRolling && !dice.isLocked}
             onClick={() => {
-              console.log(dice.value);
-              
               onLockToggle(index)}}
           />
         ))}
