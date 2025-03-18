@@ -8,6 +8,7 @@ import ActionButtons from "@/components/buttons/AuctionButtons";
 import ScoreBoard from "@/components/score/ScoreBoard";
 import TotalScoreSection from "@/components/score/TotalScore";
 import GameEndModal from "@/components/modal/GameEndModal";
+import Taro from "@tarojs/taro";
 
 const GamePage: FC = () => {
   const gameFlow = useGameFlow();
@@ -48,12 +49,14 @@ const GamePage: FC = () => {
       />
 
       {/* 游戏结束弹窗 */}
+
       {gameFlow.isGameEnded && (
         <GameEndModal
           totalScore={gameFlow.totalScore}
           bonusEarned={gameFlow.bonusEarned}
           bonusAmount={gameFlow.BONUS_AMOUNT}
           onNewGame={gameFlow.resetGame}
+          onBackToHome={() => Taro.navigateBack()}
         />
       )}
     </View>

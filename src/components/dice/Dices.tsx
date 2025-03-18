@@ -4,19 +4,36 @@ import { View } from "@tarojs/components";
 import { DiceFace } from "@/types/types";
 import Taro from "@tarojs/taro";
 import "./dice.scss";
+
 interface Props {
   value: DiceFace;
   isLocked: boolean;
   isRolling?: boolean;
   onClick?: () => void;
+  disableInteraction?: boolean;
+  onAnimationEnd?: () => void; // 添加动画结束回调
 }
 
-const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
+const Dice3D: FC<Props> = ({ 
+  value, 
+  isLocked, 
+  isRolling = false, 
+  onClick,
+  disableInteraction = false,
+  onAnimationEnd
+}) => {
   // 处理点击
   const handleClick = () => {
-    if (onClick && !isRolling) {
+    if (onClick && !isRolling && !disableInteraction) {
       onClick();
       Taro.vibrateShort();
+    }
+  };
+  
+  // 处理动画结束事件
+  const handleAnimationEnd = () => {
+    if (onAnimationEnd && isRolling) {
+      onAnimationEnd();
     }
   };
 
@@ -26,8 +43,8 @@ const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
       onClick={handleClick}
     >
       <View
-        className={`dice-3d ${isRolling ? "rolling" : ""} 
-                            show-${value}`}
+        className={`dice-3d ${isRolling ? "rolling" : ""} show-${value}`}
+        onAnimationEnd={handleAnimationEnd}
       >
         {/* 骰子的六个面 */}
         <View className="dice-3d-face dice-3d-front">
@@ -65,7 +82,7 @@ const Dice3D: FC<Props> = ({ value, isLocked, isRolling = false, onClick }) => {
         </View>
 
         {/* 锁定指示器 */}
-        {isLocked && (
+        {isLocked && !disableInteraction && (
           <View className="dice-lock-indicator">
             <View className="lock-icon" />
           </View>

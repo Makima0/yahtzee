@@ -44,10 +44,25 @@ export const useGameFlow = () => {
  const handleRollDice = useCallback(() => {
    if (gameState.rollsRemaining > 0 && !isRolling) {
      setIsRolling(true)
-     setTimeout(() => {
-       rollDices()
-       setIsRolling(false)
-     }, 600)
+     
+     // 使用 requestAnimationFrame 替代 setTimeout
+     let startTime: number | null = null
+     const duration = 600 // 动画持续时间
+     
+     const animate = (timestamp: number) => {
+       if (!startTime) startTime = timestamp
+       const elapsed = timestamp - startTime
+       
+       if (elapsed < duration) {
+         requestAnimationFrame(animate)
+       } else {
+         // 动画结束，更新状态
+         rollDices()
+         setIsRolling(false)
+       }
+     }
+     
+     requestAnimationFrame(animate)
    }
  }, [gameState.rollsRemaining, rollDices, isRolling])
 

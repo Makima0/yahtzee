@@ -82,7 +82,6 @@ const checkFourOfAKind = (dices: DiceFace[], counts: number[]): number => {
 const checkLittleStraight = (sorted: DiceFace[]): boolean => {
   // 去重后检查连续情况
   const unique = [...new Set(sorted)]
-  console.log(unique);
   
   return (
     isConsecutive(unique, 4) || // 标准小顺子

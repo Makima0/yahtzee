@@ -7,13 +7,15 @@ interface Props {
   bonusEarned: boolean
   bonusAmount: number
   onNewGame: () => void
+  onBackToHome?: () => void
 }
 
 const GameEndModal: FC<Props> = ({ 
   totalScore, 
   bonusEarned, 
   bonusAmount, 
-  onNewGame 
+  onNewGame,
+  onBackToHome
 }) => {
   return (
     <View className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -27,13 +29,25 @@ const GameEndModal: FC<Props> = ({
             (包含基础分奖励 +{bonusAmount}分)
           </Text>
         )}
-        <ActionButton
-          variant="primary"
-          onClick={onNewGame}
-          className="w-full"
-        >
-          开始新游戏
-        </ActionButton>
+        <View className="space-y-3">
+          <ActionButton
+            variant="primary"
+            onClick={onNewGame}
+            className="w-full"
+          >
+            再玩一局
+          </ActionButton>
+          
+          {onBackToHome && (
+            <ActionButton
+              variant="secondary"
+              onClick={onBackToHome}
+              className="w-full"
+            >
+              返回首页
+            </ActionButton>
+          )}
+        </View>
       </View>
     </View>
   )
